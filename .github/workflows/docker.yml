@@ -6,8 +6,11 @@ on:
       - docker*
 
 env:
+  AWS_ACCOUNT_ID: 677273280931
   AWS_REGION: us-west-2
+  EKS_CLUSTER: cathy-eks
   ECR_REPOSITORY_NAMESPACE: aws300
+  
 
 permissions:
   contents: read
