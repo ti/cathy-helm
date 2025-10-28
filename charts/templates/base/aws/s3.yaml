@@ -1,0 +1,51 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: s3-csi
+provisioner: s3.csi.aws.com
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: s3files-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: s3-csi
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: s3files-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: s3files-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: s3-csi
+  mountOptions:
+    - allow-delete
+    - allow-other
+    - allow-overwrite
+    - region {{ .Values.aws.region }}
+    - uid=1000
+    - gid=1000
+    - dir-mode=0700
+    - file-mode=0700
+    - prefix data/
+  csi:
+    driver: s3.csi.aws.com
+    volumeHandle: {{ .Values.aws.s3.id }}
+    volumeAttributes:
+      bucketName: {{ .Values.aws.s3.id }}
+---

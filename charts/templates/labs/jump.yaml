@@ -1,0 +1,232 @@
+{{- if $.Values.jump.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jump
+  labels:
+    app: jump
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jump
+  template:
+    metadata:
+      labels:
+        app: jump
+    spec:
+      serviceAccountName: jump-sa
+      containers:
+        - name: jump
+          image: 867344450900.dkr.ecr.us-west-2.amazonaws.com/aws300/test:latest
+          imagePullPolicy: Always
+          command: [ "/usr/bin/sh"]
+          args: [ "/home/core/.local/bin/entrypoint.sh", "sudo", "/usr/sbin/sshd", "-D", "-p", "22"]
+          env:
+            - name: DOCKER_HOST
+              value: tcp://dind:2375
+          ports:
+            - containerPort: 22
+          volumeMounts:
+            - mountPath: /app/cache
+              name: cache-pv
+            - name: authorized-keys-volume
+              mountPath: /home/core/.ssh/authorized_keys
+              subPath: authorized_keys
+              readOnly: true
+            - name: jump-pv
+              mountPath: /home/core/core
+            - mountPath: /app/data/s3
+              name: s3files-pv
+          resources:
+            requests:
+              cpu: 250m
+              memory: 800Mi
+          livenessProbe:
+            tcpSocket:
+              port: 22
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          readinessProbe:
+            tcpSocket:
+              port: 22
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+            successThreshold: 1
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      volumes:
+        - name: cache-pv
+          hostPath:
+            path: /var/data/xcache
+            type: DirectoryOrCreate
+        - name: authorized-keys-volume
+          configMap:
+            name: jump-authorized-keys-configmap
+            defaultMode: 0600
+        - name: jump-pv
+          persistentVolumeClaim:
+            claimName: jump-pvc
+        - name: s3files-pv
+          persistentVolumeClaim:
+            claimName: s3files-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jump-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jump-authorized-keys-configmap
+data:
+  authorized_keys: |
+    # Replace with your SSH public key, for example:
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDwUWObrQNs1HHJA5McQSskLRCIl4EYTgbI8014FncZ4LE5sg0lO0GJqJvOPLt0XdXG2wBNisksJ356ww54RihxWYvzbl2xAY4Ff8oG0lUO8XaMaX9VTaudkAwQhrZb0nzaYH1J9DCrduIR8f6I5m8+Cjp6YTZdd9e5b4oM/Xh2XNQR7pNB6CLqXPwpb4YyK5jzKj80zClzm+SBJBWgXCMDX/WI/vI6g07Z6m6zed2VvEUUagftwYGmmhOV565qe4ZPcjbnd04Cxh/yOMHZIoTHeoub+0rMl1eF75pJDlDB/ZFXM8+jU/rUBKS3qKAh4vu55RXwNVZGuwkLKFwP1BfL9ZK5OmOazUxuZW5aH4lEYYDvuF0IGH2TwPBACzt50tUxjYfhF+Y9L/1pxjYHM0jYa07u8aGM0rogRYZ13zilntQKI1nORIXIP3aqp09VatPlC/tUekDIYRKok4AjlvhBwdtUCI+rc09sthkGFmnxfEDd0PwfsPedbK01tLX4r8s= corebook
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jump
+spec:
+  selector:
+    app: jump
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: vs
+      protocol: TCP
+      port: 8300
+      targetPort: 8300
+    - name: grpc
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
+    - name: ssh
+      protocol: TCP
+      port: 22
+      targetPort: 22
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: jump
+spec:
+  parentRefs:
+    - name: eg
+  hostnames:
+    - jump.{{ .Values.global.wildcardHost }}
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: jump
+          port: 8300
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: jump
+spec:
+  parentRefs:
+    - name: eg
+      sectionName: ssh
+  rules:
+    - backendRefs:
+        - name: jump
+          port: 22
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jump-sa
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::867344450900:role/NxlabsEKS_JumpRole
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jump-binding
+subjects:
+  - kind: ServiceAccount
+    name: jump-sa
+    namespace: {{ .Release.Namespace}}
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# dind
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dind
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dind
+  template:
+    metadata:
+      labels:
+        app: dind
+    spec:
+      containers:
+        - name: dind
+          image: registry.hub.docker.com/library/docker:28-dind
+          command: [ "dockerd" ]
+          args: [ "--host", "tcp://0.0.0.0:2375" ]
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+            - name: DOCKER_HOST
+              value: tcp://localhost:2375
+          resources:
+              {{- toYaml .Values.jump.dind.resources | nindent 12 }}
+          securityContext:
+            privileged: true
+      restartPolicy: Always
+      {{- if $.Values.jump.dind86 }}
+        {{- with .Values.nodes.amd64 }}
+          {{- toYaml . | nindent 6 }}
+        {{- end }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dind
+spec:
+  selector:
+    app: dind
+  ports:
+    - name: dind
+      protocol: TCP
+      port: 2375
+      targetPort: 2375
+{{- end }}

@@ -1,0 +1,112 @@
+global:
+  host: demo.cathyorbit.com
+  wildcardHost: cathyorbit.com
+  gateway: eg
+  debug: false
+  canary: false
+  repository: 867344450900.dkr.ecr.us-west-2.amazonaws.com/
+  dependencies:
+    postgres: postgres://admin:passwd@postgres:5432?sslmode=disable
+    mongo: mongodb://admin:passwd@mongo:27017?authSource=admin
+    mysql: mysql://root:passwd@mysql:3306
+    redis: redis://:passwd@redis:6379/0
+    kafka: kafka://kafka:9092
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+
+aws:
+  region: us-west-2
+  efs:
+    id: fs-03d82029d8d02d8b8
+  fsx:
+    id: fs-0c76e579372bc4dfa
+    mountname: sp5etb4v
+  s3:
+    id: xlab-eks
+
+nodes:
+  amd64:
+    nodeSelector:
+      type: cpu
+    tolerations:
+      - key: "arch"
+        operator: "Equal"
+        value: "x86_64"
+        effect: NoSchedule
+  nvidia:
+    nodeSelector:
+      type: gpu
+    tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: NoSchedule
+
+initjob:
+  enabled: false
+
+robot:
+  enabled: true
+  datasets:
+    replicas: 1
+    image:
+      repository: aws300/datasets
+      tag: latest
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: "2"
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+aitest:
+  enabled: false
+  replicas: 1
+  image:
+    repository: aws300/aitest
+    tag: latest
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: "8"
+      memory: 64Gi
+      nvidia.com/gpu: "1"
+    requests:
+      cpu: "2"
+      memory: 16Gi
+      nvidia.com/gpu: "1"
+  persistence:
+    accessMode: ReadWriteMany
+    size: 500Gi
+
+modelpv:
+  enabled: true
+  persistence:
+    accessMode: ReadWriteMany
+    size: 500Gi
+    storageClass: s3-csi
+  mountOptions:
+    - allow-delete
+    - region us-west-2
+    - prefix models/
+  csi:
+    driver: s3.csi.aws.com
+    volumeHandle: s3-csi-driver-volume
+    volumeAttributes:
+      bucketName: eks-model-pv
+
+  cache:
+    size: 500Gi
+
+jump:
+  enabled: true
+  dind86: false
+  dind:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi

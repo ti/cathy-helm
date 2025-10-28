@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{.Release.Namespace}}
+  labels:
+    "app.kubernetes.io/managed-by": Helm
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: "type in (cpu, gpu)"
+    "meta.helm.sh/release-name": {{.Release.Name}}
+    "meta.helm.sh/release-namespace": {{.Release.Namespace}}
+---
+{{- if $.Values.initjob.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-job
+spec:
+  ttlSecondsAfterFinished: 360
+  template:
+    spec:
+      terminationGracePeriodSeconds: 60
+      initContainers:
+        - name: wait-job
+          image: "{{ .Values.global.repository }}{{ .Values.test.image.repository }}:{{ .Values.test.image.tag }}"
+          command: ['/bin/sh', '-c']
+          args:
+          - |
+              echo "postgres is now available."
+              until nc -z postgres 5432; do
+              echo "waiting for postgres"
+              sleep 2
+              done
+              echo "postgres is now available."
+      containers:
+        - name: init-job
+          image: "{{ .Values.global.repository }}{{ .Values.test.image.repository }}:{{ .Values.test.image.tag }}"
+          env:
+            - name: DEBUG
+              value: "{{ .Values.global.debug }}"
+            - name: MYSQL_USER
+              value: {{ include "urlUser" .Values.global.dependencies.mysql | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ include "urlPassword" .Values.global.dependencies.mysql | quote }}
+            - name: POSTGRES_USER
+              value: {{ include "urlUser" .Values.global.dependencies.postgres | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ include "urlPassword" .Values.global.dependencies.postgres | quote }}
+            - name: MONGO
+              value: {{ .Values.global.dependencies.mongo }}
+          workingDir: "/app/scripts"
+          command: ["/app/scripts/init.sh"]
+          volumeMounts:
+            - name: script-volume
+              mountPath: /app/scripts
+      restartPolicy: OnFailure
+      volumes:
+        - name: script-volume
+          configMap:
+            name: init-job-configmap
+            defaultMode: 0755
+            optional: false
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: init-job-configmap
+data:
+  {{- (.Files.Glob "scripts/initjob/*").AsConfig | nindent 2 }}
+---
+{{- end }}

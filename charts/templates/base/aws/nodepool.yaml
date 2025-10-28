@@ -1,0 +1,186 @@
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  annotations:
+    karpenter.sh/nodepool-hash-version: v3
+  labels:
+    app.kubernetes.io/managed-by: eks
+  name: cpu-system
+spec:
+  disruption:
+    budgets:
+      - nodes: 10%
+    consolidateAfter: 15m
+    consolidationPolicy: WhenEmpty
+  template:
+    metadata:
+      labels:
+        usage: system
+    spec:
+      expireAfter: 480h
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+            - on-demand
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values:
+            - m8g.xlarge
+        - key: kubernetes.io/os
+          operator: In
+          values:
+            - linux
+      taints:
+        - effect: NoSchedule
+          key: CriticalAddonsOnly
+      terminationGracePeriod: 24h0m0s
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  annotations:
+    karpenter.sh/nodepool-hash-version: v3
+  labels:
+    app.kubernetes.io/managed-by: eks
+  name: cpu
+spec:
+  disruption:
+    budgets:
+      - nodes: 10%
+    consolidateAfter: 15m
+    consolidationPolicy: WhenEmpty
+  limits:
+    cpu: "1000"
+    memory: 1000Gi
+  template:
+    metadata:
+      labels:
+        type: cpu
+    spec:
+      expireAfter: 480h
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: eks.amazonaws.com/instance-family
+          operator: In
+          values:
+            - m8g
+        - key: eks.amazonaws.com/instance-cpu
+          operator: In
+          values:
+            - "2"
+            - "4"
+            - "8"
+            - "16"
+            - "32"
+        - key: kubernetes.io/arch
+          operator: In
+          values:
+            - arm64
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+            - on-demand
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  annotations:
+    karpenter.sh/nodepool-hash-version: v3
+  labels:
+    app.kubernetes.io/managed-by: eks
+  name: gpu
+spec:
+  disruption:
+    budgets:
+      - nodes: 10%
+    consolidateAfter: 15m
+    consolidationPolicy: WhenEmpty
+  limits:
+    cpu: "1000"
+    memory: 1000Gi
+    nvidia.com/gpu: 32
+  template:
+    metadata:
+      labels:
+        type: gpu
+    spec:
+      expireAfter: 470h
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values:
+            - g6e.2xlarge
+        - key: eks.amazonaws.com/instance-gpu-manufacturer
+          operator: In
+          values:
+            - nvidia
+        - key: kubernetes.io/arch
+          operator: In
+          values:
+            - amd64
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+            - on-demand
+      taints:
+        - effect: NoSchedule
+          key: nvidia.com/gpu
+          value: "true"
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  annotations:
+    karpenter.sh/nodepool-hash-version: v3
+  labels:
+    app.kubernetes.io/managed-by: eks
+  name: cpu-general
+spec:
+  disruption:
+    budgets:
+      - nodes: 10%
+    consolidateAfter: 15m
+    consolidationPolicy: WhenEmpty
+  limits:
+    cpu: "128"
+    memory: 256Gi
+  template:
+    metadata:
+      labels:
+        type: cpu
+    spec:
+      expireAfter: 472h
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: default
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+            - on-demand
+        - key: eks.amazonaws.com/instance-family
+          operator: In
+          values:
+            - c7a
+        - key: kubernetes.io/arch
+          operator: In
+          values:
+            - amd64
+      taints:
+        - effect: NoSchedule
+          key: arch
+          value: x86_64
+      terminationGracePeriod: 24h0m0s

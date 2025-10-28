@@ -1,0 +1,56 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fsx-sc
+  labels:
+    app.kubernetes.io/name: fsx-lustre
+    app.kubernetes.io/component: storage
+provisioner: fsx.csi.aws.com
+mountOptions:
+  - relatime
+  - flock
+  - _netdev
+  - user_xattr
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: fsx-pv
+  labels:
+    app.kubernetes.io/name: fsx-lustre
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 1200Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: fsx-sc
+  csi:
+    driver: fsx.csi.aws.com
+    volumeHandle: {{ .Values.aws.fsx.id }}
+    volumeAttributes:
+      dnsname: {{ .Values.aws.fsx.id }}.fsx.{{ .Values.aws.region }}.amazonaws.com
+      mountname: {{ .Values.aws.fsx.mountname }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fsx-pvc
+  namespace: {{.Release.Namespace}}
+  labels:
+    app.kubernetes.io/name: fsx-lustre
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: fsx-sc
+  resources:
+    requests:
+      storage: 1200Gi
+  volumeName: fsx-pv
+---
