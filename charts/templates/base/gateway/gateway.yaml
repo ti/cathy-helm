@@ -15,60 +15,9 @@ spec:
     - name: http
       protocol: HTTP
       port: 80
-    - name: https
-      protocol: HTTPS
-      hostname: tls.{{.Values.global.wildcardHost}}
-      port: 443
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: tls-main
-    - name: emqx
-      protocol: HTTPS
-      hostname: emqx.{{.Values.global.wildcardHost}}
-      port: 443
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: tls-emqx
-    - name: https-xnxrun
-      protocol: HTTPS
-      hostname: x.nx.run
-      port: 443
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: tls-xnxrun
-    - name: http3
-      protocol: UDP
-      port: 8443
-      allowedRoutes:
-        kinds:
-          - kind: UDPRoute
     - name: ssh
       protocol: TCP
       port: 22
-      allowedRoutes:
-        kinds:
-          - kind: TCPRoute
-    - name: ssh2022
-      protocol: TCP
-      port: 2022
-      allowedRoutes:
-        kinds:
-          - kind: TCPRoute
-    - name: mqtts
-      protocol: TCP
-      port: 8883
-      allowedRoutes:
-        kinds:
-          - kind: TCPRoute
-    - name: mqttwss
-      protocol: TCP
-      port: 8084
       allowedRoutes:
         kinds:
           - kind: TCPRoute
