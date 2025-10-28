@@ -18,7 +18,7 @@ spec:
       serviceAccountName: jump-sa
       containers:
         - name: jump
-          image: 867344450900.dkr.ecr.us-west-2.amazonaws.com/aws300/test:latest
+          image: {{ .Values.global.repository }}aws300/test:latest
           imagePullPolicy: Always
           command: [ "/usr/bin/sh"]
           args: [ "/home/core/.local/bin/entrypoint.sh", "sudo", "/usr/sbin/sshd", "-D", "-p", "22"]
