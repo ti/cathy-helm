@@ -7,9 +7,9 @@ on:
     tags:
       - v*
 env:
-  AWS_ACCOUNT_ID: 867344450900
+  AWS_ACCOUNT_ID: 677273280931
   AWS_REGION: us-west-2
-  EKS_CLUSTER: orbit
+  EKS_CLUSTER: cathy-eks
 
 permissions:
   contents: read
