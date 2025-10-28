@@ -4,7 +4,7 @@ global:
   gateway: eg
   debug: false
   canary: false
-  repository: 867344450900.dkr.ecr.us-west-2.amazonaws.com/
+  repository: 677273280931.dkr.ecr.us-west-2.amazonaws.com/
   dependencies:
     postgres: postgres://admin:passwd@postgres:5432?sslmode=disable
     mongo: mongodb://admin:passwd@mongo:27017?authSource=admin
@@ -20,12 +20,12 @@ global:
 aws:
   region: us-west-2
   efs:
-    id: fs-03d82029d8d02d8b8
+    id: fs-029e317d7785f2e84
   fsx:
-    id: fs-0c76e579372bc4dfa
-    mountname: sp5etb4v
+    id: fs-0c4269544f210eb11
+    mountname: oeaevb4v
   s3:
-    id: xlab-eks
+    id: cathyorbit-s3-bkt
 
 nodes:
   amd64:
