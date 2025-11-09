@@ -18,7 +18,7 @@ spec:
       serviceAccountName: jump-sa
       containers:
         - name: jump
-          image: 867344450900.dkr.ecr.us-west-2.amazonaws.com/aws300/test:latest
+          image: aws300/test:latest
           imagePullPolicy: Always
           command: [ "/usr/bin/sh"]
           args: [ "/home/core/.local/bin/entrypoint.sh", "sudo", "/usr/sbin/sshd", "-D", "-p", "22"]
@@ -36,8 +36,6 @@ spec:
               readOnly: true
             - name: jump-pv
               mountPath: /home/core/core
-            - mountPath: /app/data/s3
-              name: s3files-pv
           resources:
             requests:
               cpu: 250m
@@ -74,9 +72,6 @@ spec:
         - name: jump-pv
           persistentVolumeClaim:
             claimName: jump-pvc
-        - name: s3files-pv
-          persistentVolumeClaim:
-            claimName: s3files-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
