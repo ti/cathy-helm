@@ -22,8 +22,8 @@ aws:
   efs:
     id: fs-029e317d7785f2e84
   fsx:
-    id: fs-0c4269544f210eb11
-    mountname: oeaevb4v
+    id: fs-09a809fd225e4cc7d
+    mountname: gptunb4v
   s3:
     id: cathyorbit-s3-bkt
 

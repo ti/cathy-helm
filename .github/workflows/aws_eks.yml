@@ -9,7 +9,7 @@ on:
 env:
   AWS_ACCOUNT_ID: 677273280931
   AWS_REGION: us-west-2
-  EKS_CLUSTER: cathy-eks
+  EKS_CLUSTER: cathy-orbit-eks-cluster
 
 permissions:
   contents: read
