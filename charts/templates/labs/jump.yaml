@@ -90,7 +90,6 @@ metadata:
   name: jump-authorized-keys-configmap
 data:
   authorized_keys: |
-    # Replace with your SSH public key, for example:
     ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2GXinaC69T/vQwSp32DrPPhHuVYZjBQbDx5h+31WHVLp7ygpHo5nc1BQ2s/opFkYgrkyC6L0XwII1ICknwCXPwacRliik7v1NtR3qbRSD2wjtoPcnqu0KWepAmjsbBcmywyltW++oy0fB/TpNSnaK6OMNIPq5K1lEnYSWrU1AZdgxGQIoVTIzVIWyu+Jix+PVGLU/P0fqrmqYcSOiycAJ9Tvl5vJzM+iZ79rgzT/Ck1WUj0qEKkYItVDhP9+o7zeSrSfYD0M70N1HKGzdBWVh/7peRpxWfANKPwnKX2T8zFQ9eLYeRCnshg9LsQzluc6UYV/AobNQEmuW/Lpgt8kZ eks_test
 ---
 apiVersion: v1
