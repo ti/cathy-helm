@@ -161,7 +161,7 @@ kind: ServiceAccount
 metadata:
   name: jump-sa
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::867344450900:role/NxlabsEKS_JumpRole
+    eks.amazonaws.com/role-arn: arn:aws:iam::677273280931:role/EKS_JumpRole
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
