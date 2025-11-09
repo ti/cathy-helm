@@ -20,7 +20,7 @@ global:
 aws:
   region: us-west-2
   efs:
-    id: fs-029e317d7785f2e84
+    id: fs-028e017f975712f2f
   fsx:
     id: fs-09a809fd225e4cc7d
     mountname: gptunb4v
